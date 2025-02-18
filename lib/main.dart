@@ -77,29 +77,44 @@ class _EncuestaScreenState extends State<EncuestaScreen>
     super.dispose();
   }
 
-  Future<void> enviarRespuesta(String respuesta) async {
+ Future<void> enviarRespuesta(String respuesta) async {
   final location = tz.getLocation('America/La_Paz');
   final now = tz.TZDateTime.now(location);
   String fechaHora = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
-  final url = Uri.parse("https://script.google.com/macros/s/AKfycbze7iNdATpGHNUI2dmzVE-Psu3ByUSIPfDbYg6pQfNe4N4jpbtF68iNRD_Y3f0CHzG-hA/exec");
+  final url = Uri.parse("https://script.google.com/macros/s/AKfycbxPx8womoPymIWh1jWgkNaXgdtKmocuTP2haV5peIqSEp7Keuok7TDr5jSe4SexECLZ/exec");
 
-  final response = await http.post(
-    url,
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode({
-      "fecha": fechaHora.split(' ')[0],
-      "hora": fechaHora.split(' ')[1],
-      "pregunta": preguntaActual,
-      "respuesta": respuesta,
-    }),
-  );
+  _logger.info("Enviando respuesta: $respuesta");
+  _logger.info("Fecha y hora: $fechaHora");
+  _logger.info("URL: $url");
 
-  if (response.statusCode == 200) {
-    _logger.info("Respuesta guardada correctamente.");
-  } else {
-    _logger.severe("Error al guardar la respuesta: ${response.statusCode}");
+  try {
+    final response = await http.post(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",  // Permitir CORS
+      },
+      body: jsonEncode({
+        "fecha": fechaHora.split(' ')[0],
+        "hora": fechaHora.split(' ')[1],
+        "pregunta": preguntaActual,
+        "respuesta": respuesta,
+      }),
+    );
+
+    _logger.info("HTTP status code: ${response.statusCode}");
+    _logger.info("HTTP response body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      _logger.info("Respuesta guardada correctamente.");
+    } else {
+      _logger.severe("Error al guardar la respuesta: ${response.statusCode}");
+    }
+  } catch (e) {
+    _logger.severe("Error al enviar la respuesta: $e");
   }
 }
+
 
   void registrarRespuesta(String respuesta) {
     enviarRespuesta(respuesta);
